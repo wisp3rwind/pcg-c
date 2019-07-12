@@ -19,29 +19,46 @@
 # visit http://www.pcg-random.org/.
 #
 
-TARGETS = pcg32-demo pcg32-global-demo pcg32x2-demo pcg64-demo
+CURRENT_SRC_DIR=$(SRC_DIR)/sample
+CURRENT_BUILD_DIR=$(BUILD_DIR)/sample
 
-LDFLAGS  += -L../src
+TARGETS_NAMES = pcg32-demo pcg32-global-demo pcg32x2-demo pcg64-demo
+
+# Filenames only
+OBJS_FILES = $(addsuffix .o, $(TARGETS_NAMES))
+
+# Complete paths
+OBJS = $(addprefix ${CURRENT_BUILD_DIR}/, $(OBJS_FILES))
+TARGETS = $(addprefix ${CURRENT_BUILD_DIR}/, $(TARGETS_NAMES))
+
+LDFLAGS  += -L$(BUILD_DIR)/src
 LDLIBS   += -lpcg_random
-CPPFLAGS += -I../include -I../extras
+CPPFLAGS += -I $(SRC_DIR)/include -I $(SRC_DIR)/extras
 CFLAGS   += -std=c99 -Wall
 
+
+# Top-level targets
 all: $(TARGETS)
 
 clean:
-	rm -f *.o $(TARGETS)
+	rm -f $(OBJS) $(TARGETS)
 	rm -rf actual
 
-../extras/entropy.o: ../extras/entropy.c ../include/pcg_variants.h \
-  ../extras/pcg_spinlock.h ../extras/entropy.h
+# Executables
+$(TARGETS): %: %.o $(BUILD_DIR)/extras/entropy.o
 
-pcg32-demo: pcg32-demo.o ../extras/entropy.o
-pcg32-global-demo: pcg32-global-demo.o ../extras/entropy.o
-pcg32x2-demo: pcg32x2-demo.o ../extras/entropy.o
-pcg64-demo: pcg64-demo.o ../extras/entropy.o
 
-pcg32-demo.o: pcg32-demo.c ../include/pcg_variants.h ../extras/entropy.h
-pcg32-global-demo.o: pcg32-global-demo.c ../include/pcg_variants.h \
-  ../extras/entropy.h
-pcg32x2-demo.o: pcg32x2-demo.c ../include/pcg_variants.h ../extras/entropy.h
-pcg64-demo.o: pcg64-demo.c ../include/pcg_variants.h ../extras/entropy.h
+# Compilation
+
+$(BUILD_DIR)/extras/entropy.o: $(SRC_DIR)/extras/entropy.c | $(BUILD_DIR)/extras
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(OBJS): $(CURRENT_BUILD_DIR)/%.o: $(CURRENT_SRC_DIR)/%.c | $(CURRENT_BUILD_DIR)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I $(CURRENT_SRC_DIR) -c $< -o $@
+
+
+# Make build dir
+$(CURRENT_BUILD_DIR):
+	mkdir -p $(CURRENT_BUILD_DIR)
+$(BUILD_DIR)/extras:
+	mkdir -p $(BUILD_DIR)/extras

@@ -19,25 +19,31 @@
 # visit http://www.pcg-random.org/.
 #
 
-all:
-	cd src; $(MAKE)
-	cd test-low; $(MAKE)
-	cd test-high; $(MAKE)
-	cd sample; $(MAKE)
-
 PREFIX ?= /usr/local
+SRC_DIR ?= .
+BUILD_DIR ?= ./build
+
+PREFIX_ABS = $(abspath $(PREFIX))
+SRC_DIR_ABS = $(abspath $(SRC_DIR))
+BUILD_DIR_ABS = $(abspath $(BUILD_DIR))
+
+all:
+	make -C src BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make -C test-low BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make -C test-high BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make -C sample BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
 
 install: all
-	install src/libpcg_random.a $(PREFIX)/lib
-	install -m 0644 include/pcg_variants.h $(PREFIX)/include
+	install $(BUILD_DIR)/src/libpcg_random.a $(PREFIX)/lib
+	install -m 0644 $(SRC_DIR)/include/pcg_variants.h $(PREFIX)/include
 
 test:   all
-	cd test-low; $(MAKE) test
-	cd test-high; $(MAKE) test
+	make test -C test-low BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make test -C test-high BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
 
 clean:
-	cd src; $(MAKE) clean
-	cd test-low; $(MAKE) clean
-	cd test-high; $(MAKE) clean
-	cd sample; $(MAKE) clean
-	rm -f extras/*.o
+	make clean -C src BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make clean -C test-low BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make clean -C test-high BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	make clean -C sample BUILD_DIR="$(BUILD_DIR_ABS)" SRC_DIR="$(SRC_DIR_ABS)"
+	rm -rf $(BUILD_DIR_ABS)/extras
